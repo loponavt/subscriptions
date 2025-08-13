@@ -1,5 +1,5 @@
 definitions:
-  model.Subscription:
+  subscriptions_internal_model.Subscription:
     properties:
       end_date:
         type: string
@@ -15,7 +15,7 @@ definitions:
       user_id:
         type: string
     type: object
-  model.SubscriptionReq:
+  subscriptions_internal_model.SubscriptionReq:
     properties:
       end_date:
         description: EndDate optional subscription end date in MM-YYYY format
@@ -42,35 +42,51 @@ definitions:
           required: true
         type: string
     required:
-      - price
-      - service_name
-      - start_date
-      - user_id
+    - price
+    - service_name
+    - start_date
+    - user_id
     type: object
 info:
-  contact: { }
+  contact: {}
 paths:
   /subscriptions:
     get:
-      description: Get all subscriptions optionally filtered by user_id and service_name
+      description: Get all subscriptions optionally filtered by user_id and service_name,
+        with pagination
       parameters:
-        - description: Filter by user UUID
-          in: query
-          name: user_id
-          type: string
-        - description: Filter by service name
-          in: query
-          name: service_name
-          type: string
+      - description: Filter by user UUID
+        in: query
+        name: user_id
+        type: string
+      - description: Filter by service name
+        in: query
+        name: service_name
+        type: string
+      - default: 20
+        description: Max number of records to return
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Number of records to skip
+        in: query
+        name: offset
+        type: integer
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
-          description: OK
+          description: Paginated list of subscriptions
           schema:
-            items:
-              $ref: '#/definitions/model.Subscription'
-            type: array
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
         "500":
           description: Internal Server Error
           schema:
@@ -79,26 +95,26 @@ paths:
             type: object
       summary: List subscriptions
       tags:
-        - subscriptions
+      - subscriptions
     post:
       consumes:
-        - application/json
+      - application/json
       description: Create a subscription with service name, price, user ID, start
         and optional end dates
       parameters:
-        - description: Subscription request body
-          in: body
-          name: subscription
-          required: true
-          schema:
-            $ref: '#/definitions/model.SubscriptionReq'
+      - description: Subscription request body
+        in: body
+        name: subscription
+        required: true
+        schema:
+          $ref: '#/definitions/subscriptions_internal_model.SubscriptionReq'
       produces:
-        - application/json
+      - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/model.Subscription'
+            $ref: '#/definitions/subscriptions_internal_model.Subscription'
         "400":
           description: Bad Request
           schema:
@@ -113,16 +129,16 @@ paths:
             type: object
       summary: Create a new subscription
       tags:
-        - subscriptions
+      - subscriptions
   /subscriptions/{id}:
     delete:
       description: Delete subscription by UUID
       parameters:
-        - description: Subscription ID (UUID)
-          in: path
-          name: id
-          required: true
-          type: string
+      - description: Subscription ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
       responses:
         "204":
           description: No Content
@@ -140,22 +156,22 @@ paths:
             type: object
       summary: Delete subscription by ID
       tags:
-        - subscriptions
+      - subscriptions
     get:
       description: Get details of a subscription by its UUID
       parameters:
-        - description: Subscription ID (UUID)
-          in: path
-          name: id
-          required: true
-          type: string
+      - description: Subscription ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/model.Subscription'
+            $ref: '#/definitions/subscriptions_internal_model.Subscription'
         "400":
           description: Bad Request
           schema:
@@ -170,30 +186,30 @@ paths:
             type: object
       summary: Get subscription by ID
       tags:
-        - subscriptions
+      - subscriptions
     put:
       consumes:
-        - application/json
+      - application/json
       description: Update subscription fields by subscription UUID
       parameters:
-        - description: Subscription ID (UUID)
-          in: path
-          name: id
-          required: true
-          type: string
-        - description: Updated subscription data
-          in: body
-          name: subscription
-          required: true
-          schema:
-            $ref: '#/definitions/model.SubscriptionReq'
+      - description: Subscription ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Updated subscription data
+        in: body
+        name: subscription
+        required: true
+        schema:
+          $ref: '#/definitions/subscriptions_internal_model.SubscriptionReq'
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/model.Subscription'
+            $ref: '#/definitions/subscriptions_internal_model.Subscription'
         "400":
           description: Bad Request
           schema:
@@ -208,31 +224,31 @@ paths:
             type: object
       summary: Update subscription by ID
       tags:
-        - subscriptions
+      - subscriptions
   /subscriptions/total:
     get:
       description: Calculate total cost for a user and optional service within a date
         range (from, to in MM-YYYY format)
       parameters:
-        - description: User UUID
-          in: query
-          name: user_id
-          required: true
-          type: string
-        - description: Service name
-          in: query
-          name: service_name
-          type: string
-        - description: Start period (MM-YYYY)
-          in: query
-          name: from
-          type: string
-        - description: End period (MM-YYYY)
-          in: query
-          name: to
-          type: string
+      - description: User UUID
+        in: query
+        name: user_id
+        required: true
+        type: string
+      - description: Service name
+        in: query
+        name: service_name
+        type: string
+      - description: Start period (MM-YYYY)
+        in: query
+        name: from
+        type: string
+      - description: End period (MM-YYYY)
+        in: query
+        name: to
+        type: string
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: OK
@@ -254,5 +270,5 @@ paths:
             type: object
       summary: Calculate total subscription cost
       tags:
-        - subscriptions
+      - subscriptions
 swagger: "2.0"

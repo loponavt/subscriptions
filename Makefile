@@ -25,10 +25,6 @@ docker-compose-down:
 clean:
 	rm -f $(BINARY_NAME)
 
-.PHONY: swag
-swag:
-	swag init -g cmd/app/main.go -o docs
-
 .PHONY: docker-compose-build
 docker-compose-build:
 	docker-compose build

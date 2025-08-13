@@ -6,6 +6,7 @@ import (
 	"log"
 	"subscriptions/internal/config"
 	"subscriptions/internal/model"
+	"time"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -35,6 +36,7 @@ type Repository interface {
 	Update(sub *model.Subscription) error
 	Delete(id uuid.UUID) error
 	List(userID *uuid.UUID, serviceName *string, limit, offset int) (*model.SubscriptionList, error)
+	CalculateTotal(userID *uuid.UUID, serviceName *string, from, to time.Time) (int, error)
 }
 
 type repo struct {
@@ -98,4 +100,32 @@ func (r *repo) List(userID *uuid.UUID, serviceName *string, limit, offset int) (
 		Total: total,
 		Items: subs,
 	}, nil
+}
+
+func (r *repo) CalculateTotal(userID *uuid.UUID, serviceName *string, from, to time.Time) (int, error) {
+	var total int
+
+	// считаем количество месяцев пересечения и умножаем на price
+	// Используем GREATEST/LEAST для выбора пересекающегося диапазона
+	// CASE WHEN months < 1 THEN 1 ELSE months END — чтобы минимальный период был 1 месяц
+	query := r.db.Model(&model.Subscription{}).
+		Select(`
+			COALESCE(SUM(price * GREATEST(1, DATE_PART('month', AGE(LEAST(COALESCE(end_date, NOW()), ?), GREATEST(start_date, ?))))), 0) as total
+		`, to, from)
+
+	if userID != nil {
+		query = query.Where("user_id = ?", *userID)
+	}
+	if serviceName != nil {
+		query = query.Where("service_name = ?", *serviceName)
+	}
+
+	// Пересечение диапазонов
+	query = query.Where("(start_date <= ?) AND (COALESCE(end_date, NOW()) >= ?)", to, from)
+
+	if err := query.Pluck("total", &total).Error; err != nil {
+		return 0, err
+	}
+
+	return total, nil
 }

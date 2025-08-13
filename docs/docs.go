@@ -17,7 +17,7 @@ const docTemplate = `{
     "paths": {
         "/subscriptions": {
             "get": {
-                "description": "Get all subscriptions optionally filtered by user_id and service_name",
+                "description": "Get all subscriptions optionally filtered by user_id and service_name, with pagination",
                 "produces": [
                     "application/json"
                 ],
@@ -37,15 +37,36 @@ const docTemplate = `{
                         "description": "Filter by service name",
                         "name": "service_name",
                         "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "description": "Max number of records to return",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "description": "Number of records to skip",
+                        "name": "offset",
+                        "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Paginated list of subscriptions",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/model.Subscription"
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
                             }
                         }
                     },
@@ -79,7 +100,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/model.SubscriptionReq"
+                            "$ref": "#/definitions/subscriptions_internal_model.SubscriptionReq"
                         }
                     }
                 ],
@@ -87,7 +108,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/model.Subscription"
+                            "$ref": "#/definitions/subscriptions_internal_model.Subscription"
                         }
                     },
                     "400": {
@@ -202,7 +223,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/model.Subscription"
+                            "$ref": "#/definitions/subscriptions_internal_model.Subscription"
                         }
                     },
                     "400": {
@@ -251,7 +272,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/model.SubscriptionReq"
+                            "$ref": "#/definitions/subscriptions_internal_model.SubscriptionReq"
                         }
                     }
                 ],
@@ -259,7 +280,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/model.Subscription"
+                            "$ref": "#/definitions/subscriptions_internal_model.Subscription"
                         }
                     },
                     "400": {
@@ -324,7 +345,7 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "model.Subscription": {
+        "subscriptions_internal_model.Subscription": {
             "type": "object",
             "properties": {
                 "end_date": {
@@ -348,7 +369,7 @@ const docTemplate = `{
                 }
             }
         },
-        "model.SubscriptionReq": {
+        "subscriptions_internal_model.SubscriptionReq": {
             "type": "object",
             "required": [
                 "price",
