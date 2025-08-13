@@ -32,3 +32,8 @@ type SubscriptionReq struct {
 	// EndDate optional subscription end date in MM-YYYY format
 	EndDate *string `json:"end_date,omitempty"`
 }
+
+type SubscriptionList struct {
+	Total int64          `json:"total"`
+	Items []Subscription `json:"items"`
+}

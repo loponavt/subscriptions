@@ -4,6 +4,7 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"strconv"
 	"subscriptions/internal/model"
 	"subscriptions/internal/usecase"
 	"time"
@@ -207,17 +208,32 @@ func (h *Handler) Delete(c *gin.Context) {
 
 // List godoc
 // @Summary List subscriptions
-// @Description Get all subscriptions optionally filtered by user_id and service_name
+// @Description Get all subscriptions optionally filtered by user_id and service_name, with pagination
 // @Tags subscriptions
 // @Produce json
 // @Param user_id query string false "Filter by user UUID"
 // @Param service_name query string false "Filter by service name"
-// @Success 200 {array} model.Subscription
+// @Param limit query int false "Max number of records to return" default(20)
+// @Param offset query int false "Number of records to skip" default(0)
+// @Success 200 {object} map[string]interface{} "Paginated list of subscriptions"
+// @Failure 400 {object} map[string]string
 // @Failure 500 {object} map[string]string
 // @Router /subscriptions [get]
 func (h *Handler) List(c *gin.Context) {
 	userIDStr := c.Query("user_id")
 	serviceName := c.Query("service_name")
+
+	limit, err := strconv.Atoi(c.DefaultQuery("limit", "20"))
+	if err != nil || limit <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid limit"})
+		return
+	}
+
+	offset, err := strconv.Atoi(c.DefaultQuery("offset", "0"))
+	if err != nil || offset < 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid offset"})
+		return
+	}
 
 	var userID *uuid.UUID
 	if userIDStr != "" {
@@ -234,12 +250,13 @@ func (h *Handler) List(c *gin.Context) {
 		svcName = &serviceName
 	}
 
-	subs, err := h.Usecase.ListSubscriptions(userID, svcName)
+	result, err := h.Usecase.ListSubscriptions(userID, svcName, limit, offset)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, subs)
+
+	c.JSON(http.StatusOK, result)
 }
 
 // Total godoc

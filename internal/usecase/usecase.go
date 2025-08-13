@@ -35,8 +35,8 @@ func (s *Usecase) DeleteSubscription(id uuid.UUID) error {
 	return s.repo.Delete(id)
 }
 
-func (s *Usecase) ListSubscriptions(userID *uuid.UUID, serviceName *string) ([]model.Subscription, error) {
-	return s.repo.List(userID, serviceName)
+func (s *Usecase) ListSubscriptions(userID *uuid.UUID, serviceName *string, limit, offset int) (*model.SubscriptionList, error) {
+	return s.repo.List(userID, serviceName, limit, offset)
 }
 
 // CalculateTotal Подсчёт суммарной стоимости подписок за период

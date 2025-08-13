@@ -34,7 +34,7 @@ type Repository interface {
 	GetByID(id uuid.UUID) (*model.Subscription, error)
 	Update(sub *model.Subscription) error
 	Delete(id uuid.UUID) error
-	List(userID *uuid.UUID, serviceName *string) ([]model.Subscription, error)
+	List(userID *uuid.UUID, serviceName *string, limit, offset int) (*model.SubscriptionList, error)
 }
 
 type repo struct {
@@ -69,17 +69,33 @@ func (r *repo) Delete(id uuid.UUID) error {
 	return r.db.Delete(&model.Subscription{}, "id = ?", id).Error
 }
 
-func (r *repo) List(userID *uuid.UUID, serviceName *string) ([]model.Subscription, error) {
+func (r *repo) List(userID *uuid.UUID, serviceName *string, limit, offset int) (*model.SubscriptionList, error) {
 	var subs []model.Subscription
-	query := r.db.Model(&model.Subscription{})
+	baseQuery := r.db.Model(&model.Subscription{})
+
 	if userID != nil {
-		query = query.Where("user_id = ?", *userID)
+		baseQuery = baseQuery.Where("user_id = ?", *userID)
 	}
-	if serviceName != nil && *serviceName != "" {
-		query = query.Where("service_name = ?", *serviceName)
+	if serviceName != nil {
+		baseQuery = baseQuery.Where("service_name = ?", *serviceName)
 	}
-	if err := query.Find(&subs).Error; err != nil {
+
+	// Получаем total
+	var total int64
+	if err := baseQuery.Count(&total).Error; err != nil {
 		return nil, err
 	}
-	return subs, nil
+
+	// Получаем данные с пагинацией
+	if err := baseQuery.
+		Limit(limit).
+		Offset(offset).
+		Find(&subs).Error; err != nil {
+		return nil, err
+	}
+
+	return &model.SubscriptionList{
+		Total: total,
+		Items: subs,
+	}, nil
 }
