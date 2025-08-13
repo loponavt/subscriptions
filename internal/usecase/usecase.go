@@ -1,12 +1,15 @@
 package usecase
 
 import (
+	"errors"
 	"time"
 
 	"github.com/google/uuid"
 	"subscriptions/internal/model"
 	"subscriptions/internal/repository"
 )
+
+var ErrSubscriptionNotFound = errors.New("subscription not found")
 
 type Usecase struct {
 	repo repository.Repository

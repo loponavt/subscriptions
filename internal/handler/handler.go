@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"log"
 	"net/http"
 	"subscriptions/internal/model"
@@ -116,7 +117,11 @@ func (h *Handler) Get(c *gin.Context) {
 	}
 	sub, err := h.Usecase.GetSubscription(id)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "not found"})
+		if errors.Is(err, usecase.ErrSubscriptionNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "subscription not found"})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
 		return
 	}
 	c.JSON(http.StatusOK, sub)
